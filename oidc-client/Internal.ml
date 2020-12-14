@@ -1,21 +1,20 @@
 open Utils
 
-let to_string_body (res : Piaf.Response.t) = Piaf.Body.to_string res.body
-
-let read_registration ~http_client ~client_id ~(discovery : Oidc.Discover.t) =
+let read_registration ~get ~client_id ~(discovery : Oidc.Discover.t) =
   match discovery.registration_endpoint with
   | Some endpoint ->
       let open Lwt_result.Infix in
       let registration_path = Uri.of_string endpoint |> Uri.path in
       let query = Uri.encoded_of_query [ ("client_id", [ client_id ]) ] in
       let uri = registration_path ^ query in
-      Piaf.Client.get http_client uri >>= to_string_body >>= fun s ->
+      get uri >>= fun s ->
       Oidc.Client.dynamic_of_string s |> Lwt.return
   | None -> Lwt_result.fail (`Msg "No_registration_endpoint")
 
 let register (type store)
     ~(kv : (module KeyValue.KV with type value = string and type store = store))
-    ~(store : store) ~http_client ~meta ~(discovery : Oidc.Discover.t) =
+    ~(store : store) ~(post: ?headers:(string * string) list ->
+      body:string -> string -> (string, 'a) Lwt_result.t) ~meta ~(discovery : Oidc.Discover.t) =
   let (module KV) = kv in
   let open Lwt_result.Infix in
   ( KV.get ~store "dynamic_string" >>= fun dynamic_string ->
@@ -31,10 +30,9 @@ let register (type store)
       | Ok dynamic, _ -> Lwt_result.return dynamic
       | Error _, Some endpoint ->
           let meta_string = Oidc.Client.meta_to_string meta in
-          let body = Piaf.Body.of_string meta_string in
+          let body = meta_string in
           let registration_path = Uri.of_string endpoint |> Uri.path in
-          ( Piaf.Client.post http_client ~body registration_path
-          >>= to_string_body
+          ( post ~body registration_path
           >>= fun dynamic_string ->
             let () =
               Log.debug (fun m -> m "dynamic string: %s" dynamic_string)
@@ -47,7 +45,8 @@ let register (type store)
 
 let discover (type store)
     ~(kv : (module KeyValue.KV with type value = string and type store = store))
-    ~(store : store) ~http_client ~provider_uri =
+    ~(store : store) ~(get: ?headers:(string * string) list ->
+      string -> (string, 'a) Lwt_result.t) ~provider_uri =
   let open Lwt_result.Infix in
   let (module KV) = kv in
   let save discovery =
@@ -61,15 +60,13 @@ let discover (type store)
           let discover_path =
             Uri.path provider_uri ^ "/.well-known/openid-configuration"
           in
-
           let () = print_endline (Uri.to_string provider_uri) in
-
-          Piaf.Client.get http_client discover_path >>= to_string_body >>= save)
+          get discover_path >>= save)
   |> Lwt_result.map Oidc.Discover.of_string
 
 let jwks (type store)
     ~(kv : (module KeyValue.KV with type value = string and type store = store))
-    ~(store : store) ~http_client ~provider_uri =
+    ~(store : store) ~get ~provider_uri =
   let open Lwt_result.Infix in
   let open Lwt_result.Syntax in
   let (module KV) = kv in
@@ -80,9 +77,9 @@ let jwks (type store)
       match result with
       | Ok jwks -> Lwt_result.return jwks
       | Error _ ->
-          let* discovery = discover ~kv ~store ~http_client ~provider_uri in
+          let* discovery = discover ~kv ~store ~get ~provider_uri in
           let jwks_path = Uri.of_string discovery.jwks_uri |> Uri.path in
-          Piaf.Client.get http_client jwks_path >>= to_string_body >>= save)
+          get jwks_path >>= save)
   |> Lwt_result.map Jose.Jwks.of_string
 
 (* TODO: Move to oidc lib *)

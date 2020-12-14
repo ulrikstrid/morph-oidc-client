@@ -4,35 +4,29 @@ type 'store t = {
   kv : (module KeyValue.KV with type value = string and type store = 'store);
   store : 'store;
   client : Oidc.Client.t;
-  http_client : Piaf.Client.t;
   provider_uri : Uri.t;
   redirect_uri : Uri.t;
 }
 
 let make (type store)
     ~(kv : (module KeyValue.KV with type value = string and type store = store))
-    ~(store : store) ?(http_client : Piaf.Client.t option) ~redirect_uri
-    ~provider_uri ~client : (store t, Piaf.Error.t) Lwt_result.t =
+    ~(store : store) ~redirect_uri
+    ~provider_uri ~client : store t =
   let (module KV) = kv in
-  let open Lwt_result.Infix in
-  ( match http_client with
-  | Some hc -> Lwt_result.return hc
-  | None -> Piaf.Client.create provider_uri )
-  >|= fun http_client ->
-  { kv; store; client; http_client; provider_uri; redirect_uri }
+  { kv; store; client; provider_uri; redirect_uri }
 
-let discover t =
-  Internal.discover ~kv:t.kv ~store:t.store ~http_client:t.http_client
+let discover ~get t =
+  Internal.discover ~kv:t.kv ~store:t.store ~get
     ~provider_uri:t.provider_uri
 
-let get_jwks t =
-  Internal.jwks ~kv:t.kv ~store:t.store ~http_client:t.http_client
+let get_jwks ~get t =
+  Internal.jwks ~kv:t.kv ~store:t.store ~get
     ~provider_uri:t.provider_uri
 
-let get_token ~code t =
+let get_token ~code ~get ~post t =
   let open Lwt_result.Infix in
   let open Lwt_result.Syntax in
-  let* discovery = discover t in
+  let* discovery = discover ~get t in
   let token_path = Uri.of_string discovery.token_endpoint |> Uri.path in
   let body =
     Uri.add_query_params' Uri.empty
@@ -44,7 +38,7 @@ let get_token ~code t =
         ("client_secret", t.client.secret |> ROpt.get_or ~default:"secret");
         ("redirect_uri", t.redirect_uri |> Uri.to_string);
       ]
-    |> Uri.query |> Uri.encoded_of_query |> Piaf.Body.of_string
+    |> Uri.query |> Uri.encoded_of_query
   in
   let headers =
     [
@@ -61,14 +55,13 @@ let get_token ~code t =
     | _ -> headers
   in
   Log.debug (fun m -> m "Getting token with client_id: %s" t.client.id);
-  Piaf.Client.post t.http_client ~headers ~body token_path
-  >>= Internal.to_string_body >|= Oidc.Token.of_string
+  post ?headers:(Some headers) ~body token_path >|= Oidc.Token.of_string
 
-let get_and_validate_id_token ?nonce ~code t =
+let get_and_validate_id_token ?nonce ~code ~get ~post t =
   let open Lwt_result.Syntax in
-  let* jwks = get_jwks t |> RPiaf.map_piaf_err in
-  let* token_response = get_token ~code t |> RPiaf.map_piaf_err in
-  let* discovery = discover t |> RPiaf.map_piaf_err in
+  let* jwks = get_jwks ~get t in
+  let* token_response = get_token ~code ~get ~post t in
+  let* discovery = discover ~get t in
   ( match Jose.Jwt.of_string token_response.id_token with
   | Ok jwt -> (
       if jwt.header.alg = `None then
@@ -99,39 +92,37 @@ let get_and_validate_id_token ?nonce ~code t =
   | Error e -> Error e )
   |> Lwt.return
 
-let get_auth_result ?nonce ~params ~state t =
+let get_auth_result ?nonce ~get ~post ~params ~state t =
   match (List.assoc_opt "state" params, List.assoc_opt "code" params) with
   | None, _ -> Error (`Msg "No state returned") |> Lwt.return
   | _, None -> Error (`Msg "No code returned") |> Lwt.return
   | Some returned_state, Some code ->
       if List.hd returned_state <> state then
         Error (`Msg "State doesn't match") |> Lwt.return
-      else get_and_validate_id_token ?nonce ~code:(List.hd code) t
+      else get_and_validate_id_token ?nonce ~code:(List.hd code) ~get ~post t
 
 let get_auth_parameters ?scope ?claims ?nonce ~state t =
   Oidc.Parameters.make ?scope ?claims t.client ?nonce ~state
     ~redirect_uri:t.redirect_uri
 
-let get_auth_uri ?scope ?claims ?nonce ~state t =
+let get_auth_uri ?scope ?claims ?nonce ~get ~state t =
   let query =
     get_auth_parameters ?scope ?claims ?nonce ~state t
     |> Oidc.Parameters.to_query
   in
-  discover t
+  discover ~get t
   |> Lwt_result.map (fun (discovery : Oidc.Discover.t) ->
          discovery.authorization_endpoint ^ query)
 
-let get_userinfo ~jwt ~token t =
-  let open Lwt_result.Infix in
+let get_userinfo ~(get: ?headers:(string * string) list -> string -> (string, [> `Missing_sub | `Sub_missmatch ]) result Lwt.t) ~jwt ~token t =
   let open Lwt_result.Syntax in
-  let* discovery = discover t |> RPiaf.map_piaf_err in
+  let* discovery = discover ~get t in
   let user_info_path = Uri.of_string discovery.userinfo_endpoint |> Uri.path in
   let userinfo =
-    Piaf.Client.get t.http_client
+      get
       ~headers:
         [ ("Authorization", "Bearer " ^ token); ("Accept", "application/json") ]
       user_info_path
-    >>= Internal.to_string_body |> RPiaf.map_piaf_err
   in
   Lwt_result.bind userinfo (fun userinfo ->
       Internal.validate_userinfo ~jwt userinfo |> Lwt.return)

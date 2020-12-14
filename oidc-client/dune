@@ -10,7 +10,7 @@ let () = Jbuild_plugin.V1.send @@ {|
 (library
  (name OidcClient)
  (public_name oidc-client)
- (libraries oidc piaf yojson uri)
+ (libraries oidc lwt yojson uri)
  |} ^ preprocess ^ {|)
 
 (documentation

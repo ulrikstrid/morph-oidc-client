@@ -10,6 +10,5 @@ val make :
   tenant_id:'a ->
   secret:string option ->
   redirect_uri:Uri.t ->
-  ?http_client:Piaf.Client.t ->
-  ('store Static.t, Piaf.Error.t) result Lwt.t
+  'store Static.t
 (** Creates a static Client configured for Microsft Azure AD *)

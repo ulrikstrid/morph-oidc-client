@@ -4,7 +4,6 @@ type 'store t = {
   kv : (module KeyValue.KV with type value = string and type store = 'store);
   store : 'store;
   client : Oidc.Client.t;
-  http_client : Piaf.Client.t;
   provider_uri : Uri.t;
   redirect_uri : Uri.t;
 }
@@ -18,17 +17,18 @@ type 'store t = {
 val make :
   kv:(module KeyValue.KV with type store = 'store and type value = string) ->
   store:'store ->
-  ?http_client:Piaf.Client.t ->
   redirect_uri:Uri.t ->
   provider_uri:Uri.t ->
   client:Oidc.Client.t ->
-  ('store t, Piaf.Error.t) result Lwt.t
+  'store t
 (** Creates a [t] with the supplied store type *)
 
-val discover : 'store t -> (Oidc.Discover.t, Piaf.Error.t) result Lwt.t
+val discover : get:(?headers:(string * string) list -> string -> (string, 'a) Lwt_result.t) ->
+  'b t -> (Oidc.Discover.t, 'a) Lwt_result.t
 (** Get the provider discovery document *)
 
-val get_jwks : 'store t -> (Jose.Jwks.t, Piaf.Error.t) result Lwt.t
+val get_jwks : get:(?headers:(string * string) list -> string -> (string, 'a) Lwt_result.t) ->
+  'b t -> (Jose.Jwks.t, 'a) Lwt_result.t
 (** Get JWKs from the provider *)
 
 (** {3 Authentication start}
@@ -51,9 +51,10 @@ val get_auth_uri :
   ?scope:string list ->
   ?claims:Yojson.Safe.t ->
   ?nonce:string ->
+  get:(?headers:(string * string) list ->string -> (string, 'a) Lwt_result.t) ->
   state:string ->
   'store t ->
-  (string, Piaf.Error.t) result Lwt.t
+  (string, 'a) result Lwt.t
 (** Create a valid auth uri that can be used to redirect the user to the OIDC Provider *)
 
 (** {3 Authentication callback}
@@ -63,6 +64,9 @@ val get_auth_uri :
 
 val get_auth_result :
   ?nonce:string ->
+  get:(?headers:(string * string) list -> string -> (string, Oidc.IDToken.validation_error) Lwt_result.t) ->
+  post:(?headers:(string * string) list -> body:string -> string ->
+    (string, Oidc.IDToken.validation_error) Lwt_result.t) ->
   params:(string * string list) list ->
   state:string ->
   'a t ->
@@ -71,17 +75,28 @@ val get_auth_result :
 val get_and_validate_id_token :
   ?nonce:string ->
   code:string ->
+  get:(?headers:(string * string) list -> string ->
+      (string, Oidc.IDToken.validation_error) Lwt_result.t) ->
+  post:(?headers:(string * string) list ->
+       body:string ->
+       string ->
+       (string, Oidc.IDToken.validation_error) Lwt_result.t) ->
   'store t ->
   (Oidc.Token.t, Oidc.IDToken.validation_error) result Lwt.t
 (** Get a token response from the token endpoint and validate the ID Token. *)
 
 val get_token :
-  code:string -> 'store t -> (Oidc.Token.t, Piaf.Error.t) result Lwt.t
+  code:string ->
+  get:(?headers:(string * string) list -> string -> (string, 'a) Lwt_result.t) ->
+  post:(?headers:(string * string) list ->
+        body:string -> string -> (string, 'a) Lwt_result.t) ->
+  'store t -> (Oidc.Token.t, 'a) result Lwt.t
 (** Get a token response from the token endpoint, consider using [get_and_validate_id_token] instead. *)
 
 val get_userinfo :
+  get:(?headers:(string * string) list -> string -> (string, [> `Missing_sub | `Sub_missmatch ] as 'a) result Lwt.t) ->
   jwt:Jose.Jwt.t ->
   token:string ->
-  'a t ->
-  (string, [> `Missing_sub | `Msg of string | `Sub_missmatch ]) result Lwt.t
+  'b t ->
+  (string, 'a) Lwt_result.t
 (** Get the userinfo data with the access_token returned in the token response. *)
