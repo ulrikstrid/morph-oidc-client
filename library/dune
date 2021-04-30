@@ -1,7 +1,0 @@
-(library
- (name Library)
- (public_name morph-oidc-client.library)
- (libraries routes uri str lwt uuidm morph oidc oidc-client tyxml piaf
-   containers)
- (preprocess
-  (pps tyxml-jsx)))

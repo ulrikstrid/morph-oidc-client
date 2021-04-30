@@ -49,7 +49,9 @@ let check_option_string name expected actual =
 
 let check_int = Alcotest.(check int)
 
+(*
 let trim_json_string str =
   str |> CCString.replace ~sub:" " ~by:"" |> CCString.replace ~sub:"\n" ~by:""
+*)
 
 let make_test_case (name, test) = Alcotest.test_case name `Quick test

@@ -29,7 +29,7 @@ val register :
 val get_jwks : 'store t -> (Jose.Jwks.t, Piaf.Error.t) result Lwt.t
 
 val get_token :
-  code:string -> 'store t -> (Oidc.Token.t, Piaf.Error.t) result Lwt.t
+  code:string -> 'store t -> (Oidc.Token.Response.t, Piaf.Error.t) result Lwt.t
 
 val get_auth_parameters :
   ?scope:string list ->
@@ -45,20 +45,20 @@ val get_auth_uri :
   nonce:string ->
   state:string ->
   'store t ->
-  (string, Piaf.Error.t) result Lwt.t
+  (Uri.t, Piaf.Error.t) result Lwt.t
 
 val get_and_validate_id_token :
   ?nonce:string ->
   code:string ->
   'store t ->
-  (Oidc.Token.t, Oidc.IDToken.validation_error) result Lwt.t
+  (Oidc.Token.Response.t, Oidc.IDToken.validation_error) result Lwt.t
 
 val get_auth_result :
   nonce:string ->
   params:(string * string list) list ->
   state:string ->
   'a t ->
-  (Oidc.Token.t, Oidc.IDToken.validation_error) result Lwt.t
+  (Oidc.Token.Response.t, Oidc.IDToken.validation_error) result Lwt.t
 
 val get_userinfo :
   jwt:Jose.Jwt.t ->

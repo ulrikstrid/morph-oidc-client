@@ -4,7 +4,7 @@ let src =
 module Log = (val Logs.src_log src : Logs.LOG)
 
 let get_use jwk =
-  match jwk with Jose.Jwk.Rsa_pub jwk -> jwk.use | Jose.Jwk.Oct jwk -> jwk.use
+  match jwk with Jose.Jwk.Rsa_pub jwk -> jwk.use | Jose.Jwk.Oct jwk -> jwk.use | Jose.Jwk.Es256_pub jwk -> jwk.use | Jose.Jwk.Es512_pub jwk -> jwk.use
 
 let matching_jwt (jwt : Jose.Jwt.t) (jwk : Jose.Jwk.public Jose.Jwk.t) =
   Jose.Jwk.get_alg jwk = jwt.header.alg && get_use jwk = `Sig

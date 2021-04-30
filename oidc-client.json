@@ -1,0 +1,37 @@
+{
+  "name": "oidc-client",
+  "version": "0.1.1",
+  "description": "My Project",
+  "esy": {
+    "build": "dune build -p oidc-client"
+  },
+  "scripts": {
+    "start": "reenv -e .env -- redemon -p ./oidc -p ./oidc-client -p ./library -p ./executable dune exec executable/MorphOidcClient.exe",
+    "test": "dune runtest --no-buffer",
+    "watch:test": "redemon -p ./oidc -p ./oidc-client -p ./test esy x RunTests.exe",
+    "docs": "dune build @doc --root .",
+    "fmt": "dune build @fmt --auto-promote --root .",
+    "docs-path": "esy echo #{self.target_dir / 'default' / '_doc' / '_html' / 'index.html'}"
+  },
+  "dependencies": {
+    "@opam/dune": "^2.5.0",
+    "@opam/oidc": "^0.1.1",
+    "@opam/uri": "*",
+    "@opam/yojson": "*",
+    "@reason-native-web/piaf": "^1.4.0",
+    "ocaml": "^4.10.0"
+  },
+  "devDependencies": {
+    "@opam/junit": "*",
+    "@opam/junit_alcotest": "*",
+    "@opam/merlin": "*",
+    "@opam/ocaml-lsp-server": "ocaml/ocaml-lsp:ocaml-lsp-server.opam",
+    "@opam/ocamlformat": "*",
+    "@opam/odoc": "*",
+    "@opam/bisect_ppx": "^2.3.0"
+  },
+  "resolutions": {
+    "@opam/conf-pkg-config": "esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79",
+    "@opam/session": "inhabitedtype/ocaml-session:session.opam#6180413"
+  }
+}

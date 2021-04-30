@@ -1,6 +1,7 @@
 _esy
 _coverage
 _build
+_opam
 .ci
 .vscode
 node_modules

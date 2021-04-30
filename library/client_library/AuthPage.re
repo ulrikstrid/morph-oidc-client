@@ -45,6 +45,7 @@ let make: string => Morph.Server.handler =
 
     switch (auth_uri) {
     | Ok(auth_uri) =>
+      let auth_uri = Uri.to_string(auth_uri);
       Logs.info(m =>
         m("Starting new authentication with auth_uri %s", auth_uri)
       );

@@ -26,7 +26,7 @@ val validate :
   ?nonce:string ->
   ?jwk:'a Jose.Jwk.t ->
   client:Client.t ->
-  issuer:string ->
+  issuer:Uri.t ->
   Jose.Jwt.t ->
   (Jose.Jwt.t, validation_error) result
 (** Validation of the ID Token according to the spec.

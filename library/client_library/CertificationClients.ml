@@ -146,10 +146,15 @@ let _datas =
   ]
 *)
 
-let redirect_uri = Sys.getenv "OIDC_REDIRECT_URI"
+let redirect_uri =
+  try Sys.getenv "OIDC_REDIRECT_URI"
+  with _ -> failwith "Must set OIDC_REDIRECT_URI"
 
 let form_post_certification_client_data =
-  let provider_uri = Sys.getenv "FORM_POST_PROVIDER_HOST" in
+  let provider_uri =
+    try Sys.getenv "FORM_POST_PROVIDER_HOST"
+    with _ -> failwith "Must set FORM_POST_PROVIDER_HOST"
+  in
   {
     name = "form_post_morph_oidc_client";
     category = "new";
@@ -159,7 +164,10 @@ let form_post_certification_client_data =
   }
 
 let basic_certification_client_data =
-  let provider_uri = Sys.getenv "BASIC_PROVIDER_HOST" in
+  let provider_uri =
+    try Sys.getenv "BASIC_PROVIDER_HOST"
+    with _ -> failwith "Must set BASIC_PROVIDER_HOST"
+  in
   {
     name = "basic_morph_oidc_client";
     category = "new";

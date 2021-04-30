@@ -6,7 +6,7 @@ let jwk = Jose.Jwk.make_priv_rsa (Mirage_crypto_pk.Rsa.generate ~bits:1024 ())
 
 let aud = "1234"
 
-let issuer = "https://idp.example.com"
+let issuer = Uri.of_string "https://idp.example.com"
 
 let valid_jwt =
   Jose.Jwt.sign jwk
@@ -14,7 +14,7 @@ let valid_jwt =
     ~payload:
       (`Assoc
         [
-          ("iss", `String issuer);
+          ("iss", `String (Uri.to_string issuer));
           ("aud", `String aud);
           ("iat", `Int (Unix.time () |> int_of_float));
           ("exp", `Int ((Unix.time () |> int_of_float) + 1000));

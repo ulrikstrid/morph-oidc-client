@@ -12,16 +12,17 @@ doc: "https://ulrikstrid.github.io/ocaml-oidc"
 bug-reports: "https://github.com/ulrikstrid/ocaml-oidc/issues"
 depends: [
   "ocaml" {>= "4.08.0"}
-  "dune" {>= "2.5"}
+  "dune" {>= "2.8" & >= "2.5"}
   "jose" {>= "0.5.1"}
   "oidc"
   "uri"
   "yojson"
   "logs"
   "piaf"
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

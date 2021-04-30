@@ -1,4 +1,10 @@
 (tests
  (names test)
- (libraries mirage-crypto mirage-crypto-rng mirage-crypto-rng.unix alcotest
-   junit junit_alcotest oidc containers))
+ (libraries
+  mirage-crypto
+  mirage-crypto-rng
+  mirage-crypto-rng.unix
+  alcotest
+  junit
+  junit_alcotest
+  oidc))

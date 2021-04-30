@@ -53,7 +53,7 @@ val get_auth_uri :
   ?nonce:string ->
   state:string ->
   'store t ->
-  (string, Piaf.Error.t) result Lwt.t
+  (Uri.t, Piaf.Error.t) result Lwt.t
 (** Create a valid auth uri that can be used to redirect the user to the OIDC Provider *)
 
 (** {3 Authentication callback}
@@ -66,17 +66,17 @@ val get_auth_result :
   params:(string * string list) list ->
   state:string ->
   'a t ->
-  (Oidc.Token.t, Oidc.IDToken.validation_error) result Lwt.t
+  (Oidc.Token.Response.t, Oidc.IDToken.validation_error) result Lwt.t
 
 val get_and_validate_id_token :
   ?nonce:string ->
   code:string ->
   'store t ->
-  (Oidc.Token.t, Oidc.IDToken.validation_error) result Lwt.t
+  (Oidc.Token.Response.t, Oidc.IDToken.validation_error) result Lwt.t
 (** Get a token response from the token endpoint and validate the ID Token. *)
 
 val get_token :
-  code:string -> 'store t -> (Oidc.Token.t, Piaf.Error.t) result Lwt.t
+  code:string -> 'store t -> (Oidc.Token.Response.t, Piaf.Error.t) result Lwt.t
 (** Get a token response from the token endpoint, consider using [get_and_validate_id_token] instead. *)
 
 val get_userinfo :

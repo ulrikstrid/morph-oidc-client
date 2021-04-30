@@ -1,4 +1,4 @@
-(lang dune 2.5)
+(lang dune 2.8)
 
 (name oidc)
 
@@ -54,7 +54,7 @@
  (name oidc-client)
  (synopsis "OIDC client based on Piaf")
  (description
-   "OpenID Connect Relaying Party implementation built ontop of Piaf.")
+  "OpenID Connect Relaying Party implementation built ontop of Piaf.")
  (depends
   (ocaml
    (>= 4.08.0))
@@ -70,4 +70,4 @@
 
 (package
  (version 0.1.0)
- (name morph-oidc-client))
+ (name morph-oidc))

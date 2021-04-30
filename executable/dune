@@ -1,9 +1,48 @@
 (executable
  (name MorphOidcClient)
- (package morph-oidc-client)
+ (package morph-oidc)
  (public_name MorphOidcClient)
- (libraries lwt logs logs.fmt fmt.tty morph-oidc-client.library oidc morph
-   archi archi-lwt mirage-crypto-rng.unix piaf routes))
+ (libraries
+  lwt
+  logs
+  logs.fmt
+  fmt.tty
+  morph-oidc.client
+  oidc
+  morph
+  archi
+  archi-lwt
+  mirage-crypto-rng.unix
+  piaf
+  routes
+  Logger)
+ (modules MorphOidcClient))
+
+(executable
+ (name MorphOidcProvider)
+ (package morph-oidc)
+ (public_name MorphOidcProvider)
+ (libraries
+  lwt
+  logs
+  logs.fmt
+  fmt.tty
+  morph-oidc.provider
+  oidc
+  morph
+  archi
+  archi-lwt
+  mirage-crypto-rng.unix
+  piaf
+  routes
+  Logger)
+ (modules MorphOidcProvider))
+
+(library
+ (name Logger)
+ (package morph-oidc)
+ (libraries logs logs.fmt fmt.tty)
+ (modules Logger))
 
 (env
  (docker

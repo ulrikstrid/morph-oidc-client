@@ -8,10 +8,11 @@ homepage: "https://ulrikstrid.github.io/ocaml-oidc"
 doc: "https://ulrikstrid.github.io/ocaml-oidc"
 bug-reports: "https://github.com/ulrikstrid/ocaml-oidc/issues"
 depends: [
-  "dune" {>= "2.5"}
+  "dune" {>= "2.8"}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

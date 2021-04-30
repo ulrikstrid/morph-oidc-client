@@ -6,7 +6,7 @@ let read_registration ~http_client ~client_id ~(discovery : Oidc.Discover.t) =
   match discovery.registration_endpoint with
   | Some endpoint ->
       let open Lwt_result.Infix in
-      let registration_path = Uri.of_string endpoint |> Uri.path in
+      let registration_path = endpoint |> Uri.path in
       let query = Uri.encoded_of_query [ ("client_id", [ client_id ]) ] in
       let uri = registration_path ^ query in
       Piaf.Client.get http_client uri >>= to_string_body >>= fun s ->
@@ -20,11 +20,11 @@ let register (type store)
   let open Lwt_result.Infix in
   ( KV.get ~store "dynamic_string" >>= fun dynamic_string ->
     Lwt.return
-      ( match Oidc.Client.dynamic_of_string dynamic_string with
+      (match Oidc.Client.dynamic_of_string dynamic_string with
       | Error e -> Error e
       | Ok dynamic ->
           if Oidc.Client.dynamic_is_expired dynamic then Error `Expired_client
-          else Ok dynamic ) )
+          else Ok dynamic) )
   |> fun r ->
   Lwt.bind r (fun x ->
       match (x, discovery.registration_endpoint) with
@@ -32,7 +32,7 @@ let register (type store)
       | Error _, Some endpoint ->
           let meta_string = Oidc.Client.meta_to_string meta in
           let body = Piaf.Body.of_string meta_string in
-          let registration_path = Uri.of_string endpoint |> Uri.path in
+          let registration_path = endpoint |> Uri.path in
           ( Piaf.Client.post http_client ~body registration_path
           >>= to_string_body
           >>= fun dynamic_string ->
@@ -81,7 +81,7 @@ let jwks (type store)
       | Ok jwks -> Lwt_result.return jwks
       | Error _ ->
           let* discovery = discover ~kv ~store ~http_client ~provider_uri in
-          let jwks_path = Uri.of_string discovery.jwks_uri |> Uri.path in
+          let jwks_path = discovery.jwks_uri |> Uri.path in
           Piaf.Client.get http_client jwks_path >>= to_string_body >>= save)
   |> Lwt_result.map Jose.Jwks.of_string
 

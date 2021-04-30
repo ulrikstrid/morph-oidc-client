@@ -54,9 +54,9 @@ let get_userinfo ~jwt ~token t =
 
 let register (t : 'store t) meta =
   Lwt_result.bind
-    ( Internal.discover ~kv:t.kv ~store:t.store ~http_client:t.http_client
-        ~provider_uri:t.provider_uri
-    |> Utils.RPiaf.map_piaf_err )
+    (Internal.discover ~kv:t.kv ~store:t.store ~http_client:t.http_client
+       ~provider_uri:t.provider_uri
+    |> Utils.RPiaf.map_piaf_err)
     (fun discovery ->
       Internal.register ~kv:t.kv ~store:t.store ~http_client:t.http_client ~meta
         ~discovery)

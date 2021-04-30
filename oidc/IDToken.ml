@@ -103,7 +103,7 @@ let validate_aud ~(client : Client.t) (jwt : Jose.Jwt.t) =
           Log.debug (fun m ->
               m "aud list does not include expected value %s" client.id);
           Error (`Wrong_aud_value "")
-      (* TODO: Check azp as well if audience is longer than 1 *) )
+      (* TODO: Check azp as well if audience is longer than 1 *))
   | _ ->
       Log.debug (fun m -> m "aud is missing");
       Error `Missing_aud
@@ -114,11 +114,11 @@ let validate_nonce ?nonce (jwt : Jose.Jwt.t) =
   | Some nonce, Some jwt_nonce ->
       if nonce = jwt_nonce then (
         Log.debug (fun m -> m "nonce is valid");
-        Ok jwt )
+        Ok jwt)
       else (
         Log.debug (fun m ->
             m "nonce is invalid, expected %s got %s" nonce jwt_nonce);
-        Error `Invalid_nonce )
+        Error `Invalid_nonce)
   | None, Some _ ->
       Log.debug (fun m -> m "Got nonce but did not expect to");
       Error `Unexpected_nonce
@@ -130,10 +130,11 @@ let validate_nonce ?nonce (jwt : Jose.Jwt.t) =
       Ok jwt
 
 let validate ?nonce ?jwk ~(client : Client.t) ~issuer (jwt : Jose.Jwt.t) =
-  ( match (jwt.header.alg, jwk) with
+  let issuer = Uri.to_string issuer in
+  (match (jwt.header.alg, jwk) with
   | `None, _ -> Ok jwt
   | _, Some jwk -> Jose.Jwt.validate ~jwk jwt
-  | _, None -> Error `No_jwk_provided )
+  | _, None -> Error `No_jwk_provided)
   >>= validate_iss ~issuer >>= validate_exp >>= validate_iat >>= validate_sub
   >>= validate_aud ~client >>= validate_nonce ?nonce
   |> fun jwt ->

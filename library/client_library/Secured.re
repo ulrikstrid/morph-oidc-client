@@ -31,7 +31,7 @@ let handle: Morph.Server.handler =
     open Lwt.Infix;
     let* provider =
       Morph.Middlewares.Session.get(req, ~key="provider")
-      |> Lwt.map(CCResult.get_exn);
+      |> Lwt.map(Result.get_ok);
 
     let oidc_client = Context.get_client(req, provider);
 
@@ -43,7 +43,7 @@ let handle: Morph.Server.handler =
     switch (id_token_result, access_token_result) {
     | (Ok(id_token), Ok(access_token)) =>
       OidcClient.Dynamic.get_userinfo(
-        ~jwt=Jose.Jwt.of_string(id_token) |> CCResult.get_exn,
+        ~jwt=Jose.Jwt.of_string(id_token) |> Result.get_ok,
         ~token=access_token,
         oidc_client,
       )

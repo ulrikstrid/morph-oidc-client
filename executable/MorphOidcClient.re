@@ -53,7 +53,7 @@ module WebServer = {
     | _ => 4040
     };
 
-  let server = Morph.Server.make(~port, ~address=Unix.inet_addr_loopback, ());
+  let server = Morph.Server.make(~port, ~address=Unix.inet_addr_any, ());
 
   let start = ((), context) => {
     Logs.app(m => m("Starting server on %n", port));
@@ -92,19 +92,8 @@ let system =
 open Lwt.Infix;
 
 let main = () => {
-  Logger.setup_log(Some(Logs.Info));
-  List.iter(
-    (src: Logs.src) => {
-      switch (Logs.Src.name(src)) {
-      | a when CCString.is_sub(~sub="oidc", 0, a, 0, ~sub_len=4) =>
-        Logs.Src.set_level(src, Some(Logs.Debug))
-      | a when CCString.is_sub(~sub="piaf", 0, a, 0, ~sub_len=4) =>
-        Logs.Src.set_level(src, Some(Logs.Warning))
-      | _ => ()
-      }
-    },
-    Logs.Src.list(),
-  );
+  Logger.setup_log(Some(Logs.Warning));
+  Logs.Src.set_level(Logs.default, Some(Logs.Debug));
 
   let () = Mirage_crypto_rng_unix.initialize();
 
@@ -126,9 +115,11 @@ let main = () => {
           )
         );
       }
-    | Error(error) => {
-        Logs.err(m => m("ERROR: %s@.", error));
-        exit(1);
+    | Error(_error) => {
+        // Logs.err(m => m("ERROR: %s@.", Archi.Error.to_string(error)));
+        exit(
+          1,
+        );
       }
   );
 };
